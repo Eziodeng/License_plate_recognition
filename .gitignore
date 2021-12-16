@@ -1,0 +1,11 @@
+#mac file index
+.DS_Store
+
+#pycharm exec files
+__pycache__/*
+
+#Test pic files
+Test/*
+
+#sub git files
+.git
