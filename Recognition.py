@@ -386,7 +386,7 @@ class PlateRecognition():
                 # for wave in wave_peaks:
                 #	cv2.line(card_img, pt1=(wave[0], 5), pt2=(wave[1], 5), color=(0, 0, 255), thickness=2)
                 # 车牌字符数应大于6
-                if len(wave_peaks) <= 6:
+                if len(wave_peaks) <= 5:
                     #   print(wave_peaks)
                     continue
 
@@ -450,7 +450,7 @@ class PlateRecognition():
                         # print(charactor)
                     else:  # 识别字母
                         resp = self.model.predict(part_card)  # 匹配样本
-                        charactor = chr(resp[0])
+                        charactor = chr(int(resp[0]))
                         # print(charactor)
                     # 判断最后一个数是否是车牌边缘，假设车牌边缘被认为是1
                     if charactor == "1" and i == len(part_cards) - 1:
@@ -509,7 +509,7 @@ class PlateRecognition():
 # 测试
 if __name__ == '__main__':
     c = PlateRecognition()
-    result = c.VLPR('./Test/京AD77972.jpg')
+    result = c.VLPR('./Test/吉AA266G.jpg')
     print(result)
 
 
