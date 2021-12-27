@@ -502,7 +502,7 @@ class PlateRecognition():
 # 测试
 if __name__ == '__main__':
     c = PlateRecognition()
-    path='./True'
+    path='./Test'
     for root, dirs, files in os.walk(path):
         for file in files:
             filePath=os.path.join(path, os.path.basename(file))

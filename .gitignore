@@ -13,6 +13,9 @@ Test/*
 #sub git files
 .git
 
+#data file after train
+*.dat
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
