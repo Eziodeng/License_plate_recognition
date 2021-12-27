@@ -502,13 +502,13 @@ class PlateRecognition():
 # 测试
 if __name__ == '__main__':
     c = PlateRecognition()
-    path='./Test'
+    path='./True'
     for root, dirs, files in os.walk(path):
         for file in files:
             filePath=os.path.join(path, os.path.basename(file))
             result=c.VLPR(filePath)
             if result:
                 if file[:-4]==str(''.join(result['List'])):
-                    print(file[:-4])
+                    print(result['Type'] + " , " + file[:-4])
                 else:
-                    print(file[:-4]+"--->"+''.join(result['List']))
+                    print(file[:-4] + "--->" + ''.join(result['List']))
