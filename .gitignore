@@ -4,6 +4,9 @@
 #pycharm exec files
 __pycache__/*
 
+#Train data
+Train
+
 #Test pic files
 Test/*
 

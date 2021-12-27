@@ -1,12 +1,3 @@
-# !/usr/bin/python
-# -*- coding: utf-8 -*-
-
-# @Time: 2020/2/6 下午12:13
-# @Author: Casually
-# @File: Recognition.py
-# @Email: fjkl@vip.qq.com
-# @Software: PyCharm
-
 import cv2
 import numpy as np
 import os
@@ -15,11 +6,12 @@ from SVM_Train import SVM
 import SVM_Train
 from args import args
 
+
 class PlateRecognition():
     def __init__(self):
         self.SZ = args.Size  # 训练图片长宽
         self.MAX_WIDTH = args.MAX_WIDTH  # 原始图片最大宽度
-        self.Min_Area = args.Min_Area # 车牌区域允许最大面积
+        self.Min_Area = args.Min_Area  # 车牌区域允许最大面积
         self.PROVINCE_START = args.PROVINCE_START
         self.provinces = args.provinces
         self.cardtype = args.cardtype
@@ -112,7 +104,7 @@ class PlateRecognition():
             resize_rate = self.MAX_WIDTH / pic_width
             img = cv2.resize(img, (self.MAX_WIDTH, int(pic_hight * resize_rate)),
                              interpolation=cv2.INTER_AREA)  # 图片分辨率调整
-        # cv2.imshow('Image', img)
+
         '''
         # 代码后期添加
         # 用于处理不同亮度时色调整
@@ -121,14 +113,13 @@ class PlateRecognition():
         target_array = gray[dark_point]
         datk_size = int(target_array.size / gray.size * 100)
         # datk_size为暗色占比
-        # img = cv2.addWeighted(img, 1, img, 2, 40)  # 调整亮度
-        # img = cv2.addWeighted(img, 1.5, img, 0.5, 1)  # 调整对比度
+        img = cv2.addWeighted(img, 1, img, 2, 40)  # 调整亮度
+        img = cv2.addWeighted(img, 1.5, img, 0.5, 1)  # 调整对比度
+        cv2.imshow('ImgBrightChange', img)
         '''
 
-
-
         kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]], np.float32)  # 定义一个核
-        img = cv2.filter2D(img, -1, kernel=kernel) # 锐化
+        img = cv2.filter2D(img, -1, kernel=kernel)  # 锐化
         blur = self.cfg["blur"]
         # 高斯去噪
         if blur > 0:
@@ -137,25 +128,20 @@ class PlateRecognition():
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # cv2.imshow('GaussianBlur', img)
 
-
         kernel = np.ones((20, 20), np.uint8)
         img_opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)  # 开运算
         img_opening = cv2.addWeighted(img, 1, img_opening, -1, 0);  # 与上一次开运算结果融合
         # cv2.imshow('img_opening', img_opening)
-
 
         # 找到图像边缘
         ret, img_thresh = cv2.threshold(img_opening, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)  # 二值化
         img_edge = cv2.Canny(img_thresh, 100, 200)
         # cv2.imshow('img_edge', img_edge)
 
-
         # 使用开运算和闭运算让图像边缘成为一个整体
         kernel = np.ones((self.cfg["morphologyr"], self.cfg["morphologyc"]), np.uint8)
         img_edge1 = cv2.morphologyEx(img_edge, cv2.MORPH_CLOSE, kernel)  # 闭运算
         img_edge2 = cv2.morphologyEx(img_edge1, cv2.MORPH_OPEN, kernel)  # 开运算
-        # cv2.imshow('img_edge2', img_edge2)
-
 
         # 查找图像边缘整体形成的矩形区域，可能有很多，车牌就在其中一个矩形区域中
         try:
@@ -179,61 +165,65 @@ class PlateRecognition():
             wh_ratio = area_width / area_height
             # print('宽高比：',wh_ratio)
             # 要求矩形区域长宽比在2到5.5之间，2到5.5是车牌的长宽比，其余的矩形排除
-            if wh_ratio > 2 and wh_ratio < 5.5:
+            if 2 < wh_ratio < 5.5:
                 car_contours.append(rect)
+                # 框出所有可能的矩形
                 # box = cv2.boxPoints(rect)
                 # box = np.int0(box)
-            # 框出所有可能的矩形
-            # oldimg = cv2.drawContours(img, [box], 0, (0, 0, 255), 2)
-            # cv2.imshow("Test",oldimg )
+                # ractImg = cv2.drawContours(img, [box], 0, (0, 0, 255), 2)
+                # cv2.imshow('oldImg', oldimg)
+                # cv2.imshow("Test", ractImg)
+                # cv2.waitKey()
 
         # 矩形区域可能是倾斜的矩形，需要矫正，以便使用颜色定位
         card_imgs = []
         for rect in car_contours:
-            if rect[2] > -1 and rect[2] < 1:  # 创造角度，使得左、高、右、低拿到正确的值
+            if -1 < rect[2] < 1:  # 创造角度，使得左、高、右、低拿到正确的值
                 angle = 1
             else:
                 angle = rect[2]
             rect = (rect[0], (rect[1][0] + 5, rect[1][1] + 5), angle)  # 扩大范围，避免车牌边缘被排除
             box = cv2.boxPoints(rect)
-            heigth_point = right_point = [0, 0]
+            box = np.int0(box)
+            height_point = right_point = [0, 0]
             left_point = low_point = [pic_width, pic_hight]
             for point in box:
                 if left_point[0] > point[0]:
                     left_point = point
                 if low_point[1] > point[1]:
                     low_point = point
-                if heigth_point[1] < point[1]:
-                    heigth_point = point
+                if height_point[1] < point[1]:
+                    height_point = point
                 if right_point[0] < point[0]:
                     right_point = point
 
             if left_point[1] <= right_point[1]:  # 正角度
-                new_right_point = [right_point[0], heigth_point[1]]
-                pts2 = np.float32([left_point, heigth_point, new_right_point])  # 字符只是高度需要改变
-                pts1 = np.float32([left_point, heigth_point, right_point])
-                M = cv2.getAffineTransform(pts1, pts2)
-                dst = cv2.warpAffine(oldimg, M, (pic_width, pic_hight))
+                new_right_point = [right_point[0], height_point[1]]
+                if (new_right_point != height_point).all():
+                    pts2 = np.float32([left_point, height_point, new_right_point])  # 字符只是高度需要改变
+                    pts1 = np.float32([left_point, height_point, right_point])
+                    M = cv2.getAffineTransform(pts1, pts2)
+                    oldimg = cv2.warpAffine(oldimg, M, (pic_width, pic_hight))
                 self.__point_limit(new_right_point)
-                self.__point_limit(heigth_point)
+                self.__point_limit(height_point)
                 self.__point_limit(left_point)
-                card_img = dst[int(left_point[1]):int(heigth_point[1]), int(left_point[0]):int(new_right_point[0])]
+                card_img = oldimg[int(left_point[1]):int(height_point[1]), int(left_point[0]):int(new_right_point[0])]
                 card_imgs.append(card_img)
-
             elif left_point[1] > right_point[1]:  # 负角度
-
-                new_left_point = [left_point[0], heigth_point[1]]
-                pts2 = np.float32([new_left_point, heigth_point, right_point])  # 字符只是高度需要改变
-                pts1 = np.float32([left_point, heigth_point, right_point])
-                M = cv2.getAffineTransform(pts1, pts2)
-                dst = cv2.warpAffine(oldimg, M, (pic_width, pic_hight))
+                new_left_point = [left_point[0], height_point[1]]
+                if (new_left_point != height_point).all():
+                    pts2 = np.float32([new_left_point, height_point, right_point])  # 字符只是高度需要改变
+                    pts1 = np.float32([left_point, height_point, right_point])
+                    M = cv2.getAffineTransform(pts1, pts2)
+                    oldimg = cv2.warpAffine(oldimg, M, (pic_width, pic_hight))
                 self.__point_limit(right_point)
-                self.__point_limit(heigth_point)
+                self.__point_limit(height_point)
                 self.__point_limit(new_left_point)
-                card_img = dst[int(right_point[1]):int(heigth_point[1]), int(new_left_point[0]):int(right_point[0])]
+                card_img = oldimg[int(right_point[1]):int(height_point[1]), int(new_left_point[0]):int(right_point[0])]
                 card_imgs.append(card_img)
-        #cv2.imshow("card", card_imgs[0])
-
+        # cv2.imshow("card0", card_imgs[0])
+        # cv2.imshow("card1", card_imgs[1])
+        # cv2.waitKey()
 
         # #____开始使用颜色定位，排除不是车牌的矩形，目前只识别蓝、绿、黄车牌
         colors = []
@@ -248,6 +238,8 @@ class PlateRecognition():
 
             if card_img_hsv is None:
                 continue
+            # cv2.imshow("cardImg", card_img)
+            # cv2.waitKey()
             row_num, col_num = card_img_hsv.shape[:2]
             card_img_count = row_num * col_num
 
@@ -324,11 +316,10 @@ class PlateRecognition():
         # cv2.imshow("result", card_imgs[0])
         # cv2.imwrite('1.jpg', card_imgs[0])
         # print('颜色识别结果：' + colors[0])
-
         return card_imgs, colors
 
     # 分割字符并识别车牌文字
-    def __identification(self, card_imgs, colors,model,modelchinese):
+    def __identification(self, card_imgs, colors, model, modelchinese):
         # 识别车牌中的字符
         result = {}
         predict_result = []
@@ -386,7 +377,7 @@ class PlateRecognition():
                 # for wave in wave_peaks:
                 #	cv2.line(card_img, pt1=(wave[0], 5), pt2=(wave[1], 5), color=(0, 0, 255), thickness=2)
                 # 车牌字符数应大于6
-                if len(wave_peaks) <= 5:
+                if len(wave_peaks) <= 6:
                     #   print(wave_peaks)
                     continue
 
@@ -409,6 +400,8 @@ class PlateRecognition():
                     wave_peaks.insert(0, wave)
 
                 # 去除车牌上的分隔点
+                if len(wave_peaks) <= 6:
+                    continue
                 point = wave_peaks[2]
                 if point[1] - point[0] < max_wave_dis / 3:
                     point_img = gray_img[:, point[0]:point[1]]
@@ -423,7 +416,7 @@ class PlateRecognition():
                 part_cards = self.__seperate_card(gray_img, wave_peaks)
 
                 # 分割输出
-                #for i, part_card in enumerate(part_cards):
+                # for i, part_card in enumerate(part_cards):
                 #    cv2.imshow(str(i), part_card)
 
                 # 识别
@@ -489,7 +482,7 @@ class PlateRecognition():
         if card_imgs is []:
             return
         else:
-            predict_result, roi, card_color = self.__identification(card_imgs, colors,self.model,self.modelchinese)
+            predict_result, roi, card_color = self.__identification(card_imgs, colors, self.model, self.modelchinese)
             if predict_result != []:
                 result['UseTime'] = round((time.time() - start), 2)
                 result['InputTime'] = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -509,7 +502,13 @@ class PlateRecognition():
 # 测试
 if __name__ == '__main__':
     c = PlateRecognition()
-    result = c.VLPR('./Test/吉AA266G.jpg')
-    print(result)
-
-
+    path='./Test'
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            filePath=os.path.join(path, os.path.basename(file))
+            result=c.VLPR(filePath)
+            if result:
+                if file[:-4]==str(''.join(result['List'])):
+                    print(file[:-4])
+                else:
+                    print(file[:-4]+"--->"+''.join(result['List']))

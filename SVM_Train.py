@@ -1,17 +1,9 @@
-# !/usr/bin/python
-# -*- coding: utf-8 -*-
-
-# @Time: 2020/2/9 下午1:39
-# @Author: Casually
-# @File: SVM_Train.py
-# @Email: fjkl@vip.qq.com
-# @Software: PyCharm
-
 import cv2
 import os
 import numpy as np
 from numpy.linalg import norm
 from args import args
+
 
 class StatModel(object):
     def load(self, fn):
@@ -19,6 +11,7 @@ class StatModel(object):
 
     def save(self, fn):
         self.model.save(fn)
+
 
 class SVM(StatModel):
     def __init__(self, C=1, gamma=0.5):
@@ -38,12 +31,14 @@ class SVM(StatModel):
         r = self.model.predict(samples)
         return r[1].ravel()
 
+
 # 定义参数
 SZ = args.Size  # 训练图片长宽
 MAX_WIDTH = args.MAX_WIDTH  # 原始图片最大宽度
 Min_Area = args.Min_Area  # 车牌区域允许最大面积
 PROVINCE_START = args.PROVINCE_START
 provinces = args.provinces
+
 
 # 来自opencv的sample，用于svm训练
 def deskew(img):
@@ -54,6 +49,7 @@ def deskew(img):
     M = np.float32([[1, skew, -0.5 * SZ * skew], [0, 1, 0]])
     img = cv2.warpAffine(img, M, (SZ, SZ), flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR)
     return img
+
 
 # 来自opencv的sample，用于svm训练
 def preprocess_hog(digits):
@@ -78,6 +74,7 @@ def preprocess_hog(digits):
         samples.append(hist)
     return np.float32(samples)
 
+
 def train_svm(path):
     # 识别英文字母和数字
     Model = SVM(C=1, gamma=0.5)
@@ -87,7 +84,7 @@ def train_svm(path):
     chars_train = []
     chars_label = []
 
-    for root, dirs, files in os.walk(os.path.join(path,'chars')):
+    for root, dirs, files in os.walk(os.path.join(path, 'chars')):
         if len(os.path.basename(root)) > 1:
             continue
         root_int = ord(os.path.basename(root))
@@ -116,7 +113,7 @@ def train_svm(path):
     chars_train = []
     chars_label = []
 
-    for root, dirs, files in os.walk(os.path.join(path,'charsChinese')):
+    for root, dirs, files in os.walk(os.path.join(path, 'charsChinese')):
         if not os.path.basename(root).startswith("zh_"):
             continue
         pinyin = os.path.basename(root)
