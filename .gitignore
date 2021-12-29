@@ -16,6 +16,9 @@ Test/*
 #data file after train
 *.dat
 
+# zip files
+*.zip
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
